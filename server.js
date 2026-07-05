@@ -423,7 +423,7 @@ app.post('/webhook', async (req, res) => {
         if (isValidUPI(text)) {
           await dbPatch('users', `telegram_id=eq.${chat_id}`, { upi_id: text });
           delete userState[chat_id];
-          await sendMsg(chat_id, `<b>✅ UPI ID updated successfully!</b>\n\n<b>💳 UPI ID: ${text}</b>`, mainKeyboard);
+          await sendMsg(chat_id, `<b>✅ UPI ID updated successfully!</b>`, mainKeyboard);
         } else {
           await sendMsg(chat_id, `<b>❌ Invalid UPI format! Please try again.\n\nExample: john.doe@okaxis</b>`);
         }
@@ -443,7 +443,7 @@ app.post('/webhook', async (req, res) => {
           const account = userState[chat_id].account;
           await dbPatch('users', `telegram_id=eq.${chat_id}`, { bank_account: account, bank_ifsc: text.toUpperCase() });
           delete userState[chat_id];
-          await sendMsg(chat_id, `<b>✅ Bank Details updated successfully!</b>\n\n<b>🏦 Account: ${account}</b>\n<b>📋 IFSC: ${text.toUpperCase()}</b>`, mainKeyboard);
+          await sendMsg(chat_id, `<b>✅ Bank Details updated successfully!</b>`, mainKeyboard);
         } else {
           await sendMsg(chat_id, `<b>❌ Invalid IFSC code format. Please enter a valid IFSC code (e.g., SBIN0001234). Please try again</b>`);
         }
@@ -524,10 +524,10 @@ app.post('/webhook', async (req, res) => {
           );
         } else if (u.upi_id) {
           userState[chat_id] = { state: 'withdraw_amount', method: 'upi', payment: u.upi_id, timestamp: Date.now() };
-          await sendMsg(chat_id, `<b>💸 Please enter withdrawal amount (Minimum: ₹50.00):</b>`);
+          await sendMsg(chat_id, `<b>Please enter withdrawal amount (Minimum: ₹50.00):</b>`);
         } else if (u.bank_account) {
           userState[chat_id] = { state: 'withdraw_amount', method: 'bank', payment: `${u.bank_account} | ${u.bank_ifsc}`, timestamp: Date.now() };
-          await sendMsg(chat_id, `<b>💸 Please enter withdrawal amount (Minimum: ₹50.00):</b>`);
+          await sendMsg(chat_id, `<b>Please enter withdrawal amount (Minimum: ₹50.00):</b>`);
         } else {
           // ✅ Koi bhi method nahi hai
           await sendInlineMsg(chat_id,
