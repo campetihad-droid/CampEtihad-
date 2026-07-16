@@ -24,7 +24,7 @@ const offerConfig = {
   'Muthoot': { installAmt: 0.1, trialAmt: 15, installBalance: false, trialBalance: true, installComment: 'Muthoot Install', trialComment: 'Muthoot Register' },
   'Jigri Super': { installAmt: 0.1, trialAmt: 45, installBalance: false, trialBalance: true, installComment: 'JIGRI Install', trialComment: 'JIGRI Deposit' },
   'FRIENDSHIP': { installAmt: 0.1, trialAmt: 43, installBalance: false, trialBalance: true, installComment: 'FriendShip Install', trialComment: 'FriendShip Deposit' },
-  'Incred Gold': { installAmt: 0.1, trialAmt: 22, installBalance: false, trialBalance: true, installComment: 'Incred Install', trialComment: 'Incred Gold' },
+  'Bajaj Finserv': { installAmt: 0.1, trialAmt: 4, installBalance: false, trialBalance: true, installComment: 'Bajaj Install', trialComment: 'Bajaj Registration' },
   'StoryTv Fire': { installAmt: 0.1, trialAmt: 22, installBalance: false, trialBalance: true, installComment: 'StoryTv Install', trialComment: 'StoryTv Trail' }
 };
 
@@ -34,7 +34,7 @@ const prefixMap = {
   'Muthoot': 'MT',
   'Jigri Super': 'JS',
   'FRIENDSHIP': 'FR',
-  'Incred Gold': 'IG',
+  'Bajaj Finserv': 'BF',
   'StoryTv Fire': 'ST'
 };
 
@@ -665,7 +665,7 @@ app.post('/refer/create', async (req, res) => {
       user_payout: user_payout || 0,
       my_payout: my_payout || 0
     });
-    const landing_url = `https://offer.cashflix.site/offer/?ref=${code}`;
+    const landing_url = `https://campetihad.vercel.app/offer/?ref=${code}`;
     res.json({ success: true, code, landing_url });
   } catch(e) {
     console.error(e);
