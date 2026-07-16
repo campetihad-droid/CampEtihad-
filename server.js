@@ -23,7 +23,7 @@ const offerConfig = {
   'Muthoot': { installAmt: 0.1, trialAmt: 15, installBalance: false, trialBalance: true, installComment: 'Muthoot Install', trialComment: 'Muthoot Register' },
   'Jigri Super': { installAmt: 0.1, trialAmt: 45, installBalance: false, trialBalance: true, installComment: 'JIGRI Install', trialComment: 'JIGRI Deposit' },
   'FRIENDSHIP': { installAmt: 0.1, trialAmt: 43, installBalance: false, trialBalance: true, installComment: 'FriendShip Install', trialComment: 'FriendShip Deposit' },
-  'Bajaj': { installAmt: 0.1, trialAmt: 4, installBalance: false, trialBalance: true, installComment: 'Bajaj Install', trialComment: 'Bajaj Register' },
+  'Bajaj Finserv': { installAmt: 0.1, trialAmt: 4, installBalance: false, trialBalance: true, installComment: 'Bajaj Install', trialComment: 'Bajaj Register' },
   'StoryTv Fire': { installAmt: 0.1, trialAmt: 22, installBalance: false, trialBalance: true, installComment: 'StoryTv Install', trialComment: 'StoryTv Trail' }
 };
 
@@ -33,7 +33,7 @@ const prefixMap = {
   'Muthoot': 'MT',
   'Jigri Super': 'JS',
   'FRIENDSHIP': 'FR',
-  'Bajaj': 'BJ',
+  'Bajaj Finserv': 'BF',
   'StoryTv Fire': 'ST'
 };
 
