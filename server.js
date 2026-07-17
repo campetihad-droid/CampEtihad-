@@ -802,7 +802,7 @@ app.get('/postback', async (req, res) => {
             const newRefBal = parseFloat(r.balance) + my_payout_custom;
             const newRefLife = parseFloat(r.lifetime_earnings) + my_payout_custom;
             await dbPatch('users', `phone=eq.${referred_by}`, { balance: newRefBal, lifetime_earnings: newRefLife });
-            await sendMsg(r.telegram_id, `<b>🎉 Refer Bonus Credited!\n\n💶 Amount = ₹${my_payout_custom}\n💰 Updated Balance = ₹${newRefBal.toFixed(2)}\n\n💡 Comment = ${offer} Refer</b>`);
+            await sendMsg(r.telegram_id, `<b>🎉 Refer Bonus Credited!\n\n💶 Amount = ₹${my_payout_custom}\n💰 Updated Balance = ₹${newRefBal.toFixed(2)}\n\n💡 Comment = ${offer} - Refer</b>`);
           }
         }
       } else if (amount > 0) {
