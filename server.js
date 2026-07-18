@@ -31,7 +31,7 @@ const offerConfig = {
 const prefixMap = {
   'PolicyBazar': 'PB',
   'Waves': 'WV',
-  'Muthoot': 'MT',
+  'Bharat Ryd': 'BR',
   'Jigri Super': 'JS',
   'FRIENDSHIP': 'FR',
   'Incred Gold': 'IG',
