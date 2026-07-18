@@ -551,7 +551,7 @@ app.post('/refer/create', async (req, res) => {
     if (!offer_name || !referrer_phone) return res.json({ success: false });
     const code = generateReferCode(offer_name);
     await dbPost('wallet_referrals', { code, offer_name, referrer_phone, user_payout: user_payout || 0, my_payout: my_payout || 0 });
-    const landing_url = `https://offer.cashflix.site/offer/?ref=${code}`;
+    const landing_url = `https://campetihad.vercel.app/offer/?ref=${code}`;
     res.json({ success: true, code, landing_url });
   } catch(e) { res.json({ success: false }); }
 });
