@@ -220,15 +220,9 @@ app.post('/webhook', async (req, res) => {
         await answerAlert(callback_query.id, '');
         const users = await dbGet('users', `telegram_id=eq.${chat_id}`);
         if (users.length > 0 && users[0].upi_id) {
-          await editMsg(chat_id, message_id,
-            `<b>💸 UPI Details:</b>\n\n<b>UPI ID: ${users[0].upi_id}</b>`,
-            [[{ text: '✏️ Update', callback_data: 'update_upi' }]]
-          );
+          await editMsg(chat_id, message_id, `<b>💸 UPI Details:</b>\n\n<b>UPI ID: ${users[0].upi_id}</b>`, [[{ text: '✏️ Update', callback_data: 'update_upi' }]]);
         } else {
-          await editMsg(chat_id, message_id,
-            `<b>💸 UPI Details:\n\nNo UPI saved.</b>`,
-            [[{ text: '✏️ Update', callback_data: 'update_upi' }]]
-          );
+          await editMsg(chat_id, message_id, `<b>💸 UPI Details:\n\nNo UPI saved.</b>`, [[{ text: '✏️ Update', callback_data: 'update_upi' }]]);
         }
 
       } else if (data === 'update_upi') {
@@ -240,15 +234,9 @@ app.post('/webhook', async (req, res) => {
         await answerAlert(callback_query.id, '');
         const users = await dbGet('users', `telegram_id=eq.${chat_id}`);
         if (users.length > 0 && users[0].bank_account) {
-          await editMsg(chat_id, message_id,
-            `<b>🏦 Bank Details:</b>\n\n<b>Account: ${users[0].bank_account}</b>\n<b>IFSC: ${users[0].bank_ifsc}</b>`,
-            [[{ text: '✏️ Update', callback_data: 'update_bank' }]]
-          );
+          await editMsg(chat_id, message_id, `<b>🏦 Bank Details:</b>\n\n<b>Account: ${users[0].bank_account}</b>\n<b>IFSC: ${users[0].bank_ifsc}</b>`, [[{ text: '✏️ Update', callback_data: 'update_bank' }]]);
         } else {
-          await editMsg(chat_id, message_id,
-            `<b>🏦 Bank Details:\n\nNo bank details saved.</b>`,
-            [[{ text: '✏️ Update', callback_data: 'update_bank' }]]
-          );
+          await editMsg(chat_id, message_id, `<b>🏦 Bank Details:\n\nNo bank details saved.</b>`, [[{ text: '✏️ Update', callback_data: 'update_bank' }]]);
         }
 
       } else if (data === 'update_bank') {
@@ -262,10 +250,7 @@ app.post('/webhook', async (req, res) => {
         if (users.length > 0) {
           const u = users[0];
           if (!u.upi_id) {
-            await editMsg(chat_id, message_id,
-              `<b>💸 UPI Details:\n\nNo UPI saved.</b>`,
-              [[{ text: '✏️ Update', callback_data: 'update_upi' }]]
-            );
+            await editMsg(chat_id, message_id, `<b>💸 UPI Details:\n\nNo UPI saved.</b>`, [[{ text: '✏️ Update', callback_data: 'update_upi' }]]);
           } else if (parseFloat(u.balance) >= 50) {
             userState[chat_id] = { state: 'withdraw_amount', method: 'upi', payment: u.upi_id, message_id, timestamp: Date.now() };
             await editMsg(chat_id, message_id, `<b>Please enter withdrawal amount (Minimum: ₹50.00):</b>`, []);
@@ -280,10 +265,7 @@ app.post('/webhook', async (req, res) => {
         if (users.length > 0) {
           const u = users[0];
           if (!u.bank_account) {
-            await editMsg(chat_id, message_id,
-              `<b>🏦 Bank Details:\n\nNo bank details saved.</b>`,
-              [[{ text: '✏️ Update', callback_data: 'update_bank' }]]
-            );
+            await editMsg(chat_id, message_id, `<b>🏦 Bank Details:\n\nNo bank details saved.</b>`, [[{ text: '✏️ Update', callback_data: 'update_bank' }]]);
           } else if (parseFloat(u.balance) >= 50) {
             userState[chat_id] = { state: 'withdraw_amount', method: 'bank', payment: `${u.bank_account} | ${u.bank_ifsc}`, message_id, timestamp: Date.now() };
             await editMsg(chat_id, message_id, `<b>Please enter withdrawal amount (Minimum: ₹50.00):</b>`, []);
@@ -301,8 +283,6 @@ app.post('/webhook', async (req, res) => {
           if (users.length > 0) {
             const u = users[0];
             const amt = parseFloat(state.amount);
-
-            // ✅ Double check security
             if (isNaN(amt) || amt <= 0 || amt < 50) {
               await sendMsg(chat_id, `<b>❌ Invalid amount!</b>`, mainKeyboard);
               delete userState[chat_id];
@@ -313,30 +293,18 @@ app.post('/webhook', async (req, res) => {
               delete userState[chat_id];
               return res.send('OK');
             }
-
             const now = getTime();
             const requestId = getRequestId();
             const newBal = parseFloat(u.balance) - amt;
-
-            await dbPost('withdrawals', {
-              telegram_id: chat_id,
-              amount: amt,
-              upi_id: state.payment,
-              status: 'pending',
-              request_id: requestId
-            });
+            await dbPost('withdrawals', { telegram_id: chat_id, amount: amt, upi_id: state.payment, status: 'pending', request_id: requestId });
             await dbPatch('users', `telegram_id=eq.${chat_id}`, { balance: newBal < 0 ? 0 : newBal });
-
             await sendInlineMsg(chat_id,
               `<b>⏳ Withdrawal Request Submitted!</b>\n\n<b>📊 Request ID: ${requestId}</b>\n<b>💰 Amount: ₹${amt}</b>\n<b>📱 Method: ${state.method === 'upi' ? 'UPI' : 'Bank'}</b>\n<b>📅 Date: ${now}</b>`,
               [[{ text: '🔍 Check Status', callback_data: `status_${requestId}` }]]
             );
             await sendInlineMsg(ADMIN_ID,
               `<b>💸 New Withdraw Request!</b>\n\n<b>🧑 User: ${u.name}</b>\n<b>📱 Phone: ${u.phone}</b>\n<b>💰 Amount: ₹${amt}</b>\n<b>💳 Payment: ${state.payment}</b>\n<b>📅 Time: ${now}</b>\n<b>📊 Request ID: ${requestId}</b>`,
-              [
-                [{ text: '✅ Approve', callback_data: `admin_approve_${requestId}` }],
-                [{ text: '❌ Cancel', callback_data: `admin_cancel_${requestId}` }]
-              ]
+              [[{ text: '✅ Approve', callback_data: `admin_approve_${requestId}` }], [{ text: '❌ Cancel', callback_data: `admin_cancel_${requestId}` }]]
             );
             delete userState[chat_id];
           }
@@ -363,49 +331,32 @@ app.post('/webhook', async (req, res) => {
         }
 
       } else if (data.startsWith('admin_approve_')) {
-        if (chat_id !== ADMIN_ID) {
-          await answerAlert(callback_query.id, '❌ Unauthorized!');
-          return res.send('OK');
-        }
+        if (chat_id !== ADMIN_ID) { await answerAlert(callback_query.id, '❌ Unauthorized!'); return res.send('OK'); }
         const requestId = data.replace('admin_approve_', '');
         const withdrawals = await dbGet('withdrawals', `request_id=eq.${requestId}`);
         if (withdrawals.length > 0) {
           const w = withdrawals[0];
-          if (w.status !== 'pending') {
-            await answerAlert(callback_query.id, '⚠️ Already processed!');
-            return res.send('OK');
-          }
+          if (w.status !== 'pending') { await answerAlert(callback_query.id, '⚠️ Already processed!'); return res.send('OK'); }
           await dbPatch('withdrawals', `request_id=eq.${requestId}`, { status: 'paid' });
-          await editMsg(ADMIN_ID, message_id,
-            `<b>💸 Withdraw Request</b>\n\n<b>📊 Request ID: ${requestId}</b>\n<b>💰 Amount: ₹${w.amount}</b>\n<b>💳 Payment: ${w.upi_id}</b>\n\n<b>✅ Approved</b>`, []
-          );
+          await editMsg(ADMIN_ID, message_id, `<b>💸 Withdraw Request</b>\n\n<b>📊 Request ID: ${requestId}</b>\n<b>💰 Amount: ₹${w.amount}</b>\n<b>💳 Payment: ${w.upi_id}</b>\n\n<b>✅ Approved</b>`, []);
           await sendMsg(w.telegram_id, `<b>Your withdrawal request of ₹${parseFloat(w.amount).toFixed(2)} has been approved! ✅</b>`);
           await answerAlert(callback_query.id, '✅ Approved!');
         }
 
       } else if (data.startsWith('admin_cancel_')) {
-        if (chat_id !== ADMIN_ID) {
-          await answerAlert(callback_query.id, '❌ Unauthorized!');
-          return res.send('OK');
-        }
+        if (chat_id !== ADMIN_ID) { await answerAlert(callback_query.id, '❌ Unauthorized!'); return res.send('OK'); }
         const requestId = data.replace('admin_cancel_', '');
         const withdrawals = await dbGet('withdrawals', `request_id=eq.${requestId}`);
         if (withdrawals.length > 0) {
           const w = withdrawals[0];
-          if (w.status !== 'pending') {
-            await answerAlert(callback_query.id, '⚠️ Already processed!');
-            return res.send('OK');
-          }
+          if (w.status !== 'pending') { await answerAlert(callback_query.id, '⚠️ Already processed!'); return res.send('OK'); }
           await dbPatch('withdrawals', `request_id=eq.${requestId}`, { status: 'cancelled' });
           const users = await dbGet('users', `telegram_id=eq.${w.telegram_id}`);
           if (users.length > 0) {
             const refundBal = parseFloat(users[0].balance) + parseFloat(w.amount);
             await dbPatch('users', `telegram_id=eq.${w.telegram_id}`, { balance: refundBal });
           }
-          await editMsg(ADMIN_ID, message_id,
-            `<b>💸 Withdraw Request</b>\n\n<b>📊 Request ID: ${requestId}</b>\n<b>💰 Amount: ₹${w.amount}</b>\n<b>💳 Payment: ${w.upi_id}</b>\n\n<b>❌ Cancelled</b>`, []
-          );
-          // ✅ Pehle jaisa cancel message + Contact Admin button
+          await editMsg(ADMIN_ID, message_id, `<b>💸 Withdraw Request</b>\n\n<b>📊 Request ID: ${requestId}</b>\n<b>💰 Amount: ₹${w.amount}</b>\n<b>💳 Payment: ${w.upi_id}</b>\n\n<b>❌ Cancelled</b>`, []);
           await sendInlineMsg(w.telegram_id,
             `<b>❌ Your withdraw request failed. Please contact CashFlix support.</b>\n\n<b>💰 ₹${parseFloat(w.amount).toFixed(2)} has been refunded to your wallet!</b>`,
             [[{ text: '📞 Contact Admin', url: `https://t.me/${ADMIN_USERNAME}` }]]
@@ -416,7 +367,6 @@ app.post('/webhook', async (req, res) => {
       } else {
         await answerAlert(callback_query.id, '');
       }
-
       return res.send('OK');
     }
 
@@ -447,10 +397,7 @@ app.post('/webhook', async (req, res) => {
     }
 
     const text = message.text || '';
-
-    if (text === '👤 Profile' || text === '💰 Withdraw') {
-      delete userState[chat_id];
-    }
+    if (text === '👤 Profile' || text === '💰 Withdraw') delete userState[chat_id];
 
     if (userState[chat_id]) {
       const state = userState[chat_id].state;
@@ -520,12 +467,7 @@ app.post('/webhook', async (req, res) => {
         await fetchWithTimeout(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id,
-            text: `<b>👋 Welcome! Please share your phone number:</b>`,
-            parse_mode: 'HTML',
-            reply_markup: contactKeyboard
-          })
+          body: JSON.stringify({ chat_id, text: `<b>👋 Welcome! Please share your phone number:</b>`, parse_mode: 'HTML', reply_markup: contactKeyboard })
         });
       } else {
         const u = users[0];
@@ -538,10 +480,7 @@ app.post('/webhook', async (req, res) => {
         const u = users[0];
         await sendInlineMsg(chat_id,
           `<b>👤 Profile</b>\n\n<b>🙌🏻 User: ${u.name} ⚡</b>\n<b>💰 Balance: ₹${parseFloat(u.balance).toFixed(2)}</b>\n<b>🪢 Lifetime Earnings: ₹${parseFloat(u.lifetime_earnings).toFixed(2)}</b>\n<b>📱 Phone: ${u.phone}</b>`,
-          [
-            [{ text: '💸 UPI', callback_data: 'set_upi' }],
-            [{ text: '🏦 Bank Details', callback_data: 'set_bank' }]
-          ]
+          [[{ text: '💸 UPI', callback_data: 'set_upi' }], [{ text: '🏦 Bank Details', callback_data: 'set_bank' }]]
         );
       }
 
@@ -552,10 +491,7 @@ app.post('/webhook', async (req, res) => {
         if (parseFloat(u.balance) < 50) {
           await sendMsg(chat_id, `<b>❌ Minimum ₹50 Required To Withdraw!</b>`, mainKeyboard);
         } else if (u.upi_id && u.bank_account) {
-          await sendInlineMsg(chat_id,
-            `<b>Choose Payment Method:</b>`,
-            [[{ text: '💸 UPI Transfer', callback_data: 'withdraw_upi' }], [{ text: '🏦 Bank Transfer', callback_data: 'withdraw_bank' }]]
-          );
+          await sendInlineMsg(chat_id, `<b>Choose Payment Method:</b>`, [[{ text: '💸 UPI Transfer', callback_data: 'withdraw_upi' }], [{ text: '🏦 Bank Transfer', callback_data: 'withdraw_bank' }]]);
         } else if (u.upi_id) {
           userState[chat_id] = { state: 'withdraw_amount', method: 'upi', payment: u.upi_id, timestamp: Date.now() };
           await sendMsg(chat_id, `<b>💸 Please enter withdrawal amount (Minimum: ₹50.00):</b>`);
@@ -563,42 +499,30 @@ app.post('/webhook', async (req, res) => {
           userState[chat_id] = { state: 'withdraw_amount', method: 'bank', payment: `${u.bank_account} | ${u.bank_ifsc}`, timestamp: Date.now() };
           await sendMsg(chat_id, `<b>💸 Please enter withdrawal amount (Minimum: ₹50.00):</b>`);
         } else {
-          await sendInlineMsg(chat_id,
-            `<b>Choose Payment Method:</b>`,
-            [[{ text: '💸 UPI Transfer', callback_data: 'withdraw_upi' }], [{ text: '🏦 Bank Transfer', callback_data: 'withdraw_bank' }]]
-          );
+          await sendInlineMsg(chat_id, `<b>Choose Payment Method:</b>`, [[{ text: '💸 UPI Transfer', callback_data: 'withdraw_upi' }], [{ text: '🏦 Bank Transfer', callback_data: 'withdraw_bank' }]]);
         }
       }
 
     } else if (text.startsWith('/pause ') && chat_id === ADMIN_ID) {
       const offerName = text.replace('/pause ', '').trim();
       const existing = await dbGet('offer_status', `offer_name=eq.${encodeURIComponent(offerName)}`);
-      if (existing.length > 0) {
-        await dbPatch('offer_status', `offer_name=eq.${encodeURIComponent(offerName)}`, { is_active: false });
-      } else {
-        await dbPost('offer_status', { offer_name: offerName, is_active: false });
-      }
+      if (existing.length > 0) { await dbPatch('offer_status', `offer_name=eq.${encodeURIComponent(offerName)}`, { is_active: false }); }
+      else { await dbPost('offer_status', { offer_name: offerName, is_active: false }); }
       await sendMsg(ADMIN_ID, `<b>⏸️ ${offerName} — Paused!</b>`);
 
     } else if (text.startsWith('/resume ') && chat_id === ADMIN_ID) {
       const offerName = text.replace('/resume ', '').trim();
       const existing = await dbGet('offer_status', `offer_name=eq.${encodeURIComponent(offerName)}`);
-      if (existing.length > 0) {
-        await dbPatch('offer_status', `offer_name=eq.${encodeURIComponent(offerName)}`, { is_active: true });
-      } else {
-        await dbPost('offer_status', { offer_name: offerName, is_active: true });
-      }
+      if (existing.length > 0) { await dbPatch('offer_status', `offer_name=eq.${encodeURIComponent(offerName)}`, { is_active: true }); }
+      else { await dbPost('offer_status', { offer_name: offerName, is_active: true }); }
       await sendMsg(ADMIN_ID, `<b>▶️ ${offerName} — Resumed!</b>`);
 
     } else if (text === '/offers' && chat_id === ADMIN_ID) {
       const offers = await dbGet('offer_status', `order=offer_name.asc`);
-      if (offers.length === 0) {
-        await sendMsg(ADMIN_ID, `<b>📋 No offers!</b>`);
-      } else {
+      if (offers.length === 0) { await sendMsg(ADMIN_ID, `<b>📋 No offers!</b>`); }
+      else {
         let msg = `<b>📋 Offer Status:</b>\n\n`;
-        offers.forEach(o => {
-          msg += `${o.is_active ? '▶️' : '⏸️'} <b>${o.offer_name}</b>\n`;
-        });
+        offers.forEach(o => { msg += `${o.is_active ? '▶️' : '⏸️'} <b>${o.offer_name}</b>\n`; });
         await sendMsg(ADMIN_ID, msg);
       }
 
@@ -613,40 +537,25 @@ app.post('/webhook', async (req, res) => {
           await dbPatch('withdrawals', `id=eq.${w.id}`, { status: 'paid' });
           await sendMsg(u.telegram_id, `<b>Your withdrawal request of ₹${parseFloat(w.amount).toFixed(2)} has been approved! ✅</b>`);
           await sendMsg(ADMIN_ID, `<b>✅ Done — ${u.name} (${u.phone}) — ₹${w.amount}</b>`);
-        } else {
-          await sendMsg(ADMIN_ID, `<b>❌ No pending withdrawal for ${phone}</b>`);
-        }
-      } else {
-        await sendMsg(ADMIN_ID, `<b>❌ User not found: ${phone}</b>`);
-      }
+        } else { await sendMsg(ADMIN_ID, `<b>❌ No pending withdrawal for ${phone}</b>`); }
+      } else { await sendMsg(ADMIN_ID, `<b>❌ User not found: ${phone}</b>`); }
     }
 
-  } catch(e) {
-    console.error(e);
-  }
+  } catch(e) { console.error(e); }
   res.send('OK');
 });
 
-// ✅ Wallet Refer Create
 app.post('/refer/create', async (req, res) => {
   try {
     const { offer_name, referrer_phone, user_payout, my_payout } = req.body;
     if (!offer_name || !referrer_phone) return res.json({ success: false });
     const code = generateReferCode(offer_name);
-    await dbPost('wallet_referrals', {
-      code, offer_name, referrer_phone,
-      user_payout: user_payout || 0,
-      my_payout: my_payout || 0
-    });
-    const landing_url = `https://campetihad.vercel.app/offer/?ref=${code}`;
+    await dbPost('wallet_referrals', { code, offer_name, referrer_phone, user_payout: user_payout || 0, my_payout: my_payout || 0 });
+    const landing_url = `https://offer.cashflix.site/offer/?ref=${code}`;
     res.json({ success: true, code, landing_url });
-  } catch(e) {
-    console.error(e);
-    res.json({ success: false });
-  }
+  } catch(e) { res.json({ success: false }); }
 });
 
-// ✅ Refer Amount Check
 app.get('/refer/amount', async (req, res) => {
   try {
     const { code } = req.query;
@@ -654,12 +563,9 @@ app.get('/refer/amount', async (req, res) => {
     const referral = await dbGet('wallet_referrals', `code=eq.${code}`);
     if (referral.length === 0) return res.json({ success: false });
     res.json({ success: true, user_payout: referral[0].user_payout, my_payout: referral[0].my_payout, offer_name: referral[0].offer_name });
-  } catch(e) {
-    res.json({ success: false });
-  }
+  } catch(e) { res.json({ success: false }); }
 });
 
-// ✅ Click endpoint — unique click ID + phone save
 app.post('/click', async (req, res) => {
   try {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
@@ -670,6 +576,7 @@ app.post('/click', async (req, res) => {
     let referred_by = null;
     let user_payout = 0;
     let my_payout = 0;
+    let is_refer = false;
 
     if (refer_code) {
       const referral = await dbGet('wallet_referrals', `code=eq.${refer_code}`);
@@ -677,50 +584,29 @@ app.post('/click', async (req, res) => {
         referred_by = referral[0].referrer_phone;
         user_payout = referral[0].user_payout;
         my_payout = referral[0].my_payout;
+        is_refer = true;
       }
     }
 
-    console.log('CLICK RECEIVED:', { click_id, offer_name, phone });
-    await dbPost('clicks', {
-      click_id,
-      offer_name: sanitize(offer_name),
-      phone: phone || null,
-      referred_by,
-      user_payout,
-      my_payout
-    });
+    await dbPost('clicks', { click_id, offer_name: sanitize(offer_name), phone: phone || null, referred_by, user_payout, my_payout, is_refer });
     res.json({ success: true });
-  } catch(e) {
-    console.error(e);
-    res.json({ success: false });
-  }
+  } catch(e) { res.json({ success: false }); }
 });
 
-// ✅ Offer status
 app.get('/offer-status', async (req, res) => {
   try {
     const { offer } = req.query;
     if (!offer) return res.json({ is_active: true });
     const result = await dbGet('offer_status', `offer_name=eq.${encodeURIComponent(offer)}`);
-    if (result.length > 0) {
-      res.json({ is_active: result[0].is_active });
-    } else {
-      res.json({ is_active: true });
-    }
-  } catch(e) {
-    res.json({ is_active: true });
-  }
+    if (result.length > 0) { res.json({ is_active: result[0].is_active }); }
+    else { res.json({ is_active: true }); }
+  } catch(e) { res.json({ is_active: true }); }
 });
 
-// ✅ Postback
 app.get('/postback', async (req, res) => {
   try {
     const { click_id = 'N/A', event = 'N/A', token } = req.query;
-
-    if (token !== POSTBACK_TOKEN) {
-      console.log('INVALID TOKEN:', token);
-      return res.status(403).send('Forbidden');
-    }
+    if (token !== POSTBACK_TOKEN) { console.log('INVALID TOKEN:', token); return res.status(403).send('Forbidden'); }
 
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     if (!rateLimit(ip, 50, 60000)) return res.status(429).send('Too Many Requests');
@@ -733,8 +619,8 @@ app.get('/postback', async (req, res) => {
     let referred_by = null;
     let user_payout_custom = 0;
     let my_payout_custom = 0;
+    let is_refer = false;
 
-    // ✅ Click ID se exact click dhundho
     try {
       const clicks = await dbGet('clicks', `click_id=eq.${encodeURIComponent(click_id)}&order=created_at.desc&limit=1`);
       if (clicks.length > 0) {
@@ -744,21 +630,13 @@ app.get('/postback', async (req, res) => {
         referred_by = clicks[0].referred_by;
         user_payout_custom = clicks[0].user_payout || 0;
         my_payout_custom = clicks[0].my_payout || 0;
+        is_refer = clicks[0].is_refer || false;
       }
     } catch(e) {}
 
-    // ✅ Phone se user dhundho
-    if (!phone) {
-      console.log('NO PHONE FOUND FOR CLICK:', click_id);
-      return res.send('OK');
-    }
+    if (!phone) { console.log('NO PHONE FOUND:', click_id); return res.send('OK'); }
 
-    const config = offerConfig[offer] || {
-      installAmt: 0, trialAmt: 0,
-      installBalance: false, trialBalance: false,
-      installComment: `${offer} Install`,
-      trialComment: `${offer} Trial`
-    };
+    const config = offerConfig[offer] || { installAmt: 0, trialAmt: 0, installBalance: false, trialBalance: false, installComment: `${offer} Install`, trialComment: `${offer} Trial` };
 
     let amount = 0;
     let comment = '';
@@ -770,10 +648,15 @@ app.get('/postback', async (req, res) => {
       comment = config.installComment;
       addBalance = config.installBalance;
     } else if (['trial', 'purchase', 'e2', 'gold_buy', 'signup', 'register', 'registration', 'deposit', 'trial_payment_successful'].includes(eventName)) {
-      amount = config.trialAmt || 0;
       comment = config.trialComment;
       addBalance = config.trialBalance;
-      if (user_payout_custom > 0) amount = user_payout_custom;
+      // ✅ Refer link — sirf custom payout (0 bhi chalega)
+      // ✅ Normal link — full config payout
+      if (is_refer) {
+        amount = user_payout_custom;
+      } else {
+        amount = config.trialAmt || 0;
+      }
     } else {
       amount = parseFloat(req.query.amount || 0);
       comment = `${offer} Complete`;
@@ -782,7 +665,6 @@ app.get('/postback', async (req, res) => {
 
     await dbPost('conversions', { telegram_id: phone, click_id, offer_name: offer, amount, event });
 
-    // ✅ Phone se user dhundho
     const users = await dbGet('users', `phone=eq.${phone}`);
     const userPayment = users.length > 0 ? 'Success' : 'Failed';
 
@@ -793,35 +675,31 @@ app.get('/postback', async (req, res) => {
         const newLife = parseFloat(u.lifetime_earnings) + amount;
         await dbPatch('users', `phone=eq.${phone}`, { balance: newBal, lifetime_earnings: newLife });
         await sendMsg(u.telegram_id, `<b>🧿 Cashback Credited 🧿</b>\n\n<b>💶 Amount  = ₹${amount}</b>\n<b>💰 Updated Balance = ₹${newBal.toFixed(2)}</b>\n\n<b>💡 Comment = ${comment}</b>`);
+      }
 
-        // ✅ Refer bonus
-        if (referred_by && my_payout_custom > 0) {
-          const referrers = await dbGet('users', `phone=eq.${referred_by}`);
-          if (referrers.length > 0) {
-            const r = referrers[0];
-            const newRefBal = parseFloat(r.balance) + my_payout_custom;
-            const newRefLife = parseFloat(r.lifetime_earnings) + my_payout_custom;
-            await dbPatch('users', `phone=eq.${referred_by}`, { balance: newRefBal, lifetime_earnings: newRefLife });
-            await sendMsg(r.telegram_id, `<b>🎉 Refer Bonus Credited!\n\n💶 Amount = ₹${my_payout_custom}\n💰 Updated Balance = ₹${newRefBal.toFixed(2)}\n\n💡 Comment = ${offer} - Refer</b>`);
-          }
+      // ✅ Refer bonus
+      if (is_refer && referred_by && my_payout_custom > 0 && addBalance) {
+        const referrers = await dbGet('users', `phone=eq.${referred_by}`);
+        if (referrers.length > 0) {
+          const r = referrers[0];
+          const newRefBal = parseFloat(r.balance) + my_payout_custom;
+          const newRefLife = parseFloat(r.lifetime_earnings) + my_payout_custom;
+          await dbPatch('users', `phone=eq.${referred_by}`, { balance: newRefBal, lifetime_earnings: newRefLife });
+          await sendMsg(r.telegram_id, `<b>🎉 Refer Bonus!\n\n💶 Amount = ₹${my_payout_custom}\n💰 Updated Balance = ₹${newRefBal.toFixed(2)}\n\n💡 Comment = Refer Bonus - ${offer}</b>`);
         }
-      } else if (amount > 0) {
-        await sendMsg(u.telegram_id, `<b>🧿 Cashback Credited 🧿</b>\n\n<b>💶 Amount  = ₹${amount}</b>\n<b>💰 Updated Balance = ₹${parseFloat(u.balance).toFixed(2)}</b>\n\n<b>💡 Comment = ${comment}</b>`);
       }
     }
 
     const trackTime = getTime();
     let msg = '';
-    if (referred_by && amount > 1) {
+    if (is_refer && referred_by) {
       msg = `<b>Conversation Count 💝</b>\n\n<b>🎁 Offer Name - ${offer}</b>\n\n<b>User Id : ${maskPhone(phone)}</b>\n<b>User Amount : ₹${amount}</b>\n<b>🥳 User Payment : ${userPayment}</b>\n\n<b>Refer Id : ${maskPhone(referred_by)}</b>\n<b>Refer Amount : ₹${my_payout_custom}</b>\n<b>🥳 Refer Payment : Success</b>\n\n<b>Run Time - ${runTime}</b>\n<b>Track Time - ${trackTime}</b>\n\n<b>Powered By - CashFlix</b>`;
     } else {
       msg = `<b>Conversation Count 💝</b>\n\n<b>🎁 Offer Name - ${offer}</b>\n\n<b>User Id : ${maskPhone(phone)}</b>\n<b>User Amount : ₹${amount}</b>\n<b>🥳 User Payment : ${userPayment}</b>\n\n<b>Run Time - ${runTime}</b>\n<b>Track Time - ${trackTime}</b>\n\n<b>Powered By - CashFlix</b>`;
     }
     await sendMsg(CHAT_ID, msg);
 
-  } catch(e) {
-    console.error(e);
-  }
+  } catch(e) { console.error(e); }
   res.send('OK');
 });
 
@@ -831,5 +709,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Running on port ${PORT}`));
 
 setInterval(async () => {
-  try { await fetchWithTimeout('https://cashflix-r5r2.onrender.com/'); } catch(e) {}
-}, 14 * 60 * 1000);
+  try { await fetchWithTimeout('https://campetihad-1.onrender.com/'); } catch(e) {} }, 14 * 60 * 1000);
