@@ -638,7 +638,7 @@ app.post('/refer/create', async (req, res) => {
       user_payout: user_payout || 0,
       my_payout: my_payout || 0
     });
-    const landing_url = `https://offer.cashflix.site/offer/?ref=${code}`;
+    const landing_url = `https://campetihad.vercel.app/offer/?ref=${code}`;
     res.json({ success: true, code, landing_url });
   } catch(e) {
     console.error(e);
